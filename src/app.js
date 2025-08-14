@@ -17,8 +17,13 @@ app.use(cookieParser());
 // Server : http//localhost:3000/<router_name>
 
 // router imports ...
+import { healthCheck } from "./Routes/healthCheck.js";
 
 
+
+//route path declarations
+
+app.use("/api/v1/healthCheck", healthCheck);
 
 
 
