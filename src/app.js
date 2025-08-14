@@ -14,10 +14,10 @@ app.use(express.urlencoded({extended: true, limit: "24kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-// Server : http//localhost:3000/<router_name>
+// Server : http//localhost:3000/api/v<current_v>/<router_name>
 
 // router imports ...
-import { healthCheck } from "./Routes/healthCheck.js";
+import healthCheck from "./Routes/healthCheck.js";
 
 
 
