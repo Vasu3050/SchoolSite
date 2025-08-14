@@ -14,4 +14,14 @@ app.use(express.urlencoded({extended: true, limit: "24kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+// Server : http//localhost:3000/<router_name>
+
+// router imports ...
+
+
+
+
+
 export { app };
+
+
