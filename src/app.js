@@ -18,12 +18,14 @@ app.use(cookieParser());
 
 // router imports ...
 import healthCheck from "./Routes/healthCheck.js";
+import userRoute from "./Routes/user.route.js";
 
 
 
 //route path declarations
 
-app.use("/api/v1/healthCheck", healthCheck);
+app.use("/api/v1/healthCheck", healthCheck); // All ok tested
+app.use("/api/v1/users", userRoute); // pending
 
 
 

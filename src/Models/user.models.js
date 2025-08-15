@@ -37,10 +37,16 @@ const userSchema = new Schema(
       default: "student",
     },
 
+    status : {
+      type: String,
+      enum: ["active", "pending", "blocked"],
+      default: "pending",
+    },
+
     refreshToken: {
       type: String,
       default: null,
-      required: true,
+      required: false,
     },
   },
   {
@@ -61,7 +67,7 @@ userSchema.methods.isPasswordCorrect = async function (Password) {
   return await bcrypt.compare(Password, this.password);
 };
 
-UseerSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,
