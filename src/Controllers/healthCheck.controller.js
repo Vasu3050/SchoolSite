@@ -7,6 +7,6 @@ const healthCheck = asyncHandler( async (req, res) =>{
         {},
         "Everything is ok!!"
     ));
-});
+}); // tested Ok
 
 export { healthCheck }

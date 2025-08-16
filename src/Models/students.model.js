@@ -10,6 +10,14 @@ const studentSchema = new Schema(
       maxlength: 100,
     },
 
+    sid: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+
     dob: {
       type: Date,
       required: true,
@@ -21,7 +29,7 @@ const studentSchema = new Schema(
       },
     },
 
-    class: {
+    grade: {
       type: String,
       enum: [
         "playgroup",

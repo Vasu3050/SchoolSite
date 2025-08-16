@@ -30,19 +30,15 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-
-    role: {
-      type: String,
+    roles: {
+      type: [String],
       enum: ["admin", "teacher", "parent"],
-      default: "student",
     },
-
-    status : {
+    status: {
       type: String,
       enum: ["active", "pending", "blocked"],
       default: "pending",
     },
-
     refreshToken: {
       type: String,
       default: null,
@@ -73,7 +69,7 @@ userSchema.methods.generateAccessToken = function () {
       _id: this._id,
       name: this.name,
       email: this.email,
-      role: this.role,
+      roles: this.roles,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -86,7 +82,7 @@ userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
       _id: this._id,
-      role: this.role,
+      roles: this.roles,
     },
     process.env.REFRESH_TOKEN_SECRET,
     {
