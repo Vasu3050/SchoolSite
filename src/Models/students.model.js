@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const studentSchema = new Schema(
   {
@@ -76,5 +77,8 @@ studentSchema.virtual("age").get(function () {
   if (!this.dob) return null;
   return Math.floor((new Date() - this.dob) / (1000 * 60 * 60 * 24 * 365.25));
 });
+
+
+studentSchema.plugin(mongoosePaginate);
 
 export const Student = mongoose.model("Student", studentSchema);

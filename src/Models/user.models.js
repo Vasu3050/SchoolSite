@@ -12,6 +12,12 @@ const userSchema = new Schema(
       maxlength: 50,
       default: "Anonymous",
     },
+    phone :{
+      type: String,
+      required: false,
+      unique: false,
+      default : "xxxxxxxxxx"
+    },
     email: {
       type: String,
       required: true,
