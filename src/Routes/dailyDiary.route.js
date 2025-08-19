@@ -6,8 +6,6 @@ import {
     deleteDiary,
     getDiary,    
 } from "../Controllers/dailyDairy.controller.js";
-import router from "./healthCheck.js";
-import { get } from "mongoose";
 
 
 router = Router();
