@@ -1,19 +1,14 @@
 import { Router } from 'express';
 import {
-  addAttendance,
-  updateAttendance,
-  deleteAttendance,
-  getAttendance,
-  getAttendances,
+  markPresent, getAttendanceById, getAttendanceByDate, markAbsent
 } from '../Controllers/attendance.controller.js';
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 
 const router = Router();
 
-router.route('/add-attendance').post(verifyJWT, addAttendance);
-router.route('/update-attendance/:id').patch(verifyJWT, updateAttendance);
-router.route('/delete-attendance/:id').delete(verifyJWT, deleteAttendance);
-router.route('/get-attendance/:id').get(verifyJWT, getAttendance);
-router.route('/get-attendances').get(verifyJWT, getAttendances);
+router.route('/add-attendance/:id').post(verifyJWT, markPresent);
+router.route('/delete-attendance/:id').delete(verifyJWT, markAbsent );
+router.route('/get-attendance/:id').get(verifyJWT, getAttendanceById);
+router.route('/get-attendances').get(verifyJWT, getAttendanceByDate);
 
 export default router;
