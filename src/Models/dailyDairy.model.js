@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 const dailyDiarySchema = new Schema(
   {
@@ -63,5 +64,7 @@ const dailyDiarySchema = new Schema(
     timestamps: true,
   }
 );
+
+dailyDiarySchema.plugin(mongoosePaginate);
 
 export const DailyDiary = mongoose.model("DailyDiary", dailyDiarySchema);
