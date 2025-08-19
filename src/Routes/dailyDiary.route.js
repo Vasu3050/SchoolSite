@@ -8,7 +8,7 @@ import {
 } from "../Controllers/dailyDairy.controller.js";
 
 
-router = Router();
+const router = Router();
 
 router.route("/writeNew").post(verifyJWT,writeNew);
 router.route("/update/:id").patch(verifyJWT,editDiary);
