@@ -22,6 +22,7 @@ import userRoute from "./Routes/user.route.js";
 import studentRoute from "./Routes/student.route.js";
 import teacherRoute from "./Routes/teacher.route.js";
 import parentRoute from "./Routes/parent.route.js";
+import attendanceRoute from "./Routes/Attendance.route.js";
 
 
 
@@ -33,6 +34,7 @@ app.use("/api/v1/users", userRoute); // pending
 app.use("/api/v1/students", studentRoute); // pending
 app.use("/api/v1/teachers", teacherRoute); // pending
 app.use("/api/v1/parents", parentRoute); // pending
+app.use("/api/v1/attendance", attendanceRoute); // pending
 
 
 

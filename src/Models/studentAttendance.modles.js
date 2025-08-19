@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const studentAttendanceSchema = new mongoose.Schema(
   {
-    staffId: {
+    StdId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
     },
