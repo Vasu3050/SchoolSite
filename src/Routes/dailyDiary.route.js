@@ -1,0 +1,20 @@
+import { Router } from "express";
+import { verifyJWT } from "../Middelwares/auth.middelwares";
+import {
+    writeNew,
+    editDiary,
+    deleteDiary,
+    getDiary,    
+} from "../Controllers/dailyDairy.controller.js";
+import router from "./healthCheck.js";
+import { get } from "mongoose";
+
+
+router = Router();
+
+router.route("/writeNew").post(verifyJWT,writeNew);
+router.route("/update/:id").patch(verifyJWT,editDiary);
+router.route("/delete/:id").delete(verifyJWT, deleteDiary);
+router.route("/get-diary").get(verifyJWT, getDiary);
+
+export default router;

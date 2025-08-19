@@ -2,6 +2,26 @@ import mongoose, { Schema } from "mongoose";
 
 const dailyDiarySchema = new Schema(
   {
+    studentId: {
+      type : mongoose.Schema.Types.ObjectId,
+      ref : "Student",
+      required : false,
+    },
+
+    grade : {
+      type : String,
+      required : false,
+      trim: true,
+      enum : ["playgroup", "nursery", "lkg", "ukg", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th"],
+    },
+
+    division: {
+      type: String,
+      required: false,
+      trim: true,
+      enum: ["a", "b", "c", "d", "e","f","g"],
+    },
+
     title: {
       type: String,
       required: true,
@@ -18,22 +38,18 @@ const dailyDiarySchema = new Schema(
       type: String,
       enum: ["event", "notice", "homework", "other", "complaint"],
       required: true,
-    },
-
-    visibility: {
-      type: String,
-    //   enum: [
-    //     "all",
-    //     "grade",
-    //     "grade-division",
-    //     "student"
-    //   ],
-      required: true,
+      default: "other",
     },
 
     writtenBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: true,
+    },
+
+    writerRole: {
+      type: String,
+      enum: ["teacher", "parent"],
       required: true,
     },
     

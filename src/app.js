@@ -35,7 +35,12 @@ app.use("/api/v1/students", studentRoute); // pending
 app.use("/api/v1/teachers", teacherRoute); // pending
 app.use("/api/v1/parents", parentRoute); // pending
 app.use("/api/v1/attendance", attendanceRoute); // pending
+app.use("/api/v1/diary",);// pending
 
+
+//notification feature
+//photo gallery
+//notice Board
 
 
 export { app };
