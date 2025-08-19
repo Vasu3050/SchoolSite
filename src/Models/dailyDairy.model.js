@@ -7,16 +7,19 @@ const dailyDiarySchema = new Schema(
       required: true,
       trim: true,
     },
+
     content: {
       type: String,
       required: true,
       trim: true,
     },
+
     category: {
       type: String,
-      enum: ["event", "notice", "homework", "other"],
+      enum: ["event", "notice", "homework", "other", "complaint"],
       required: true,
     },
+
     visibility: {
       type: String,
     //   enum: [
@@ -27,11 +30,13 @@ const dailyDiarySchema = new Schema(
     //   ],
       required: true,
     },
+
     writtenBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
+    
     expiresAt: {
       type: Date,
       required: true,
