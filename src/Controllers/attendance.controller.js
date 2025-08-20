@@ -5,6 +5,11 @@ import { User } from "../Models/user.models.js";
 import { Student } from "../Models/students.model.js";
 import { StudentAttendance } from "../Models/studentAttendance.modles.js";
 import { StaffAttendance } from "../Models/staffAttendance.models.js";
+import { getDistance } from "geolib";
+
+const targetUserLatitude = parseFloat(process.env.ALLOWED_LOCATION_LATITUDE);
+
+const targetUserLongititude = parseFloat(process.env.ALLOWED_LOCATION_LONGITITUDE);
 
 
 const markPresent = asyncHandler(async (req, res) => {
@@ -50,11 +55,35 @@ const markPresent = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Candidate Id not found.");
   }
 
+  const userLatitude = req.params.lat;
+
+  const userLongititude = req.params.long;
+
+  if (!userLatitude || !userLongititude )
+  {
+    throw new ApiError
+    (
+      403,
+      "user is not at school location. Try again in school"
+    )
+  }
+
   let marked;
   if (candiRole === "student") {
     marked = await StudentAttendance.create({ StdId: candiId });
   }
   if (candiRole === "teacher") {
+
+    const dist = getDistance({targetUserLatitude,targetUserLongititude} , {userLatitude, userLongititude});
+
+    if (dist < process.env.RANGE_MTRS)
+    {
+      throw new ApiError(
+        403,
+        "First go at the school location"
+      )
+    }
+
     marked = await StaffAttendance.create({ staffId: candiId }); // fixed field
   }
 
