@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT } from "../Middelwares/auth.middelwares";
+import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 import {
     writeNew,
     editDiary,

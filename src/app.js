@@ -23,19 +23,20 @@ import studentRoute from "./Routes/student.route.js";
 import teacherRoute from "./Routes/teacher.route.js";
 import parentRoute from "./Routes/parent.route.js";
 import attendanceRoute from "./Routes/Attendance.route.js";
+import dailyDiary from "./Routes/dailyDiary.route.js";
 
 
 
 
 //route path declarations
 
-app.use("/api/v1/healthCheck", healthCheck); // All ok tested
+app.use("/api/v1/healthCheck", healthCheck); // All done
 app.use("/api/v1/users", userRoute); // pending
 app.use("/api/v1/students", studentRoute); // pending
 app.use("/api/v1/teachers", teacherRoute); // pending
 app.use("/api/v1/parents", parentRoute); // pending
-app.use("/api/v1/attendance", attendanceRoute); // pending
-app.use("/api/v1/diary",);// pending
+app.use("/api/v1/attendance", attendanceRoute); // All done
+app.use("/api/v1/diary",dailyDiary);// All done
 
 
 //notification feature

@@ -71,7 +71,7 @@ const writeNew = asyncHandler(async (req, res) => {
   res
     .status(201)
     .json(new ApiResponse(201, diary, "Daily diary entry created successfully."));
-});
+}); // tested Ok
 
 const editDiary = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user;
@@ -130,7 +130,7 @@ const editDiary = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, diary, "Daily diary entry updated successfully."));
-});
+}); // tested Ok
 
 const deleteDiary = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user;
@@ -158,7 +158,7 @@ const deleteDiary = asyncHandler(async (req, res) => {
   res
     .status(200)
     .json(new ApiResponse(200, null, "Daily diary entry deleted successfully."));
-});
+}); // tested Ok
 
 const getDiary = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user;
@@ -233,6 +233,6 @@ const getDiary = asyncHandler(async (req, res) => {
       },
     }, "Daily diary entries retrieved successfully.")
   );
-});
+}); // tested Ok
 
 export { writeNew, editDiary, deleteDiary, getDiary };

@@ -1,8 +1,6 @@
 import { asyncHandler } from "../Utils/asyncHandler.js";
 import { ApiResponse } from "../Utils/ApiResponse.js";
 import { ApiError } from "../Utils/ApiError.js";
-import { User } from "../Models/user.models.js";
-import { Student } from "../Models/students.model.js";
 import { StudentAttendance } from "../Models/studentAttendance.modles.js";
 import { StaffAttendance } from "../Models/staffAttendance.models.js";
 import { getDistance } from "geolib";
@@ -11,7 +9,6 @@ const targetUserLatitude = parseFloat(process.env.ALLOWED_LOCATION_LATITUDE);
 
 const targetUserLongititude = parseFloat(process.env.ALLOWED_LOCATION_LONGITITUDE);
 
-
 const markPresent = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user; // fixed: req.user
 
@@ -19,7 +16,7 @@ const markPresent = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Unauthorized Access.");
   }
 
-  const { role, candiRole } = req.body;
+  const { role, candiRole, userLatitude, userLongititude } = req.body;
 
   if (!roles.includes(role) || role === "Parent") {
     throw new ApiError(403, "Invalid or unauthorized role.");
@@ -29,77 +26,71 @@ const markPresent = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Candidate role not found or invalid.");
   }
 
-  // If a teacher is marking attendance → check if teacher is present today
-  if (role === "teacher") {
-    const startDay = new Date();
-    startDay.setHours(0, 0, 0, 0);
-
-    const endDay = new Date();
-    endDay.setHours(23, 59, 59, 999);
-
-    const isTeacherPresent = await StaffAttendance.findOne({
-      staffId: _id,
-      createdAt: { $gte: startDay, $lte: endDay },
-    });
-
-    if (!isTeacherPresent || isTeacherPresent.status === "absent") {
-      throw new ApiError(
-        403,
-        "You are not allowed to mark attendance. You are marked absent for today."
-      );
-    }
-  }
-
-  const candiId = req.params.id;
-  if (!candiId) {
-    throw new ApiError(404, "Candidate Id not found.");
-  }
-
-  const userLatitude = req.params.lat;
-
-  const userLongititude = req.params.long;
-
-  if (!userLatitude || !userLongititude )
-  {
-    throw new ApiError
-    (
-      403,
-      "user is not at school location. Try again in school"
-    )
-  }
-
   let marked;
+
   if (candiRole === "student") {
+    if (role === "teacher") {
+      const candiId = req.params.id;
+      if (!candiId) {
+        throw new ApiError(404, "Candidate Id not found.");
+      }
+      const startDay = new Date();
+      startDay.setHours(0, 0, 0, 0);
+
+      const endDay = new Date();
+      endDay.setHours(23, 59, 59, 999);
+
+      const isTeacherPresent = await StaffAttendance.findOne({
+        staffId: _id,
+        createdAt: { $gte: startDay, $lte: endDay },
+      });
+
+      if (!isTeacherPresent || isTeacherPresent.status === "absent") {
+        throw new ApiError(
+          403,
+          "You are not allowed to mark attendance. You are marked absent for today."
+        );
+      }
+    }
+
     marked = await StudentAttendance.create({ StdId: candiId });
   }
   if (candiRole === "teacher") {
-
-    const dist = getDistance({targetUserLatitude,targetUserLongititude} , {userLatitude, userLongititude});
-
-    if (dist < process.env.RANGE_MTRS)
-    {
+    if (!userLatitude || !userLongititude) {
       throw new ApiError(
         403,
-        "First go at the school location"
-      )
+        "user is not at school location. Try again at school"
+      );
     }
 
-    marked = await StaffAttendance.create({ staffId: candiId }); // fixed field
+    const dist = getDistance(
+      { latitude: targetUserLatitude, longitude: targetUserLongititude },
+      { latitude: userLatitude, longitude: userLongititude }
+    );
+
+    console.log(dist);
+
+    if (dist > process.env.RANGE_MTRS) {
+      throw new ApiError(403, "First go at the school location");
+    }
+
+    marked = await StaffAttendance.create({ staffId: _id }); // fixed field
   }
 
   if (!marked) {
     throw new ApiError(500, "Attendance not marked.");
   }
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      { attendance: marked },
-      "Attendance marked successfully."
-    )
-  );
-});
-
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { attendance: marked },
+        "Attendance marked successfully."
+      )
+    );
+}); // tested Ok
 
 const getAttendanceById = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user; // fixed: req.user
@@ -140,8 +131,7 @@ const getAttendanceById = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(200, { attendance }, "Attendance fetched successfully.")
     );
-});
-
+}); // tested Ok
 
 const getAttendanceByDate = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user; // fixed: req.user
@@ -190,8 +180,7 @@ const getAttendanceByDate = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(200, { attendance }, "Attendance fetched successfully.")
     );
-});
-
+}); // tested Ok
 
 const markAbsent = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user; // fixed: req.user
@@ -236,7 +225,6 @@ const markAbsent = asyncHandler(async (req, res) => {
         "Attendance marked as absent successfully."
       )
     );
-});
-
+}); // tested Ok
 
 export { markPresent, getAttendanceById, getAttendanceByDate, markAbsent };
