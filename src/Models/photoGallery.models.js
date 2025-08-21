@@ -1,30 +1,33 @@
 import mongoose from "mongoose";
 
 const photoGallerySchema = new mongoose.Schema(
-    {
-        title: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 3,
-            maxlength: 100,
+    {   
+        title : {
+            type : String,
+            required : true,
+            trim : true,
         },
-        description: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 10,
-            maxlength: 500,
-        },
-        imageUrl: {
+
+        Url: {
             type: String, // cloudinary URL 
             required: true,
         },
+
+        publicId : {
+            type: String, // cloudinary URL 
+            required: true,
+        },
+
         postedBy: {
             type: mongoose.Types.ObjectId,
             ref: 'User',
             required: true,
         },
+
+        event : {
+            type : Boolean,
+            default : false,
+        }
     },
     {
         timestamps: true,

@@ -24,9 +24,7 @@ import teacherRoute from "./Routes/teacher.route.js";
 import parentRoute from "./Routes/parent.route.js";
 import attendanceRoute from "./Routes/Attendance.route.js";
 import dailyDiary from "./Routes/dailyDiary.route.js";
-
-
-
+import photoGallery from "./Routes/photoGallery.route.js";
 
 //route path declarations
 
@@ -37,10 +35,11 @@ app.use("/api/v1/teachers", teacherRoute); // pending
 app.use("/api/v1/parents", parentRoute); // pending
 app.use("/api/v1/attendance", attendanceRoute); // All done
 app.use("/api/v1/diary",dailyDiary);// All done
+app.use("/api/v1/gallery",photoGallery)
 
 
 //notification feature
-//photo gallery
+//photo gallery 
 //notice Board
 
 
