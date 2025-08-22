@@ -6,7 +6,7 @@ events.defaultMaxListeners = 20;
 
 import connectDB from "./Db/index.js";
 import { app } from "./app.js";
-// import { startNoticeCron } from "./cron/noticBoard.cron.js";
+import {startNoticeCron} from "./cron/noticBoard.cron.js";
 
 connectDB()
   .then(() => {
