@@ -1,40 +1,39 @@
-import {v2 as cloudinary} from "cloudinary"
-import fs from "fs"
+import { v2 as cloudinary } from "cloudinary"; // must be quoted
+import fs from "fs";
 
-
-cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
-  api_key: process.env.CLOUDINARY_API_KEY, 
-  api_secret: process.env.CLOUDINARY_API_SECRET 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-const uploadOnCloudinary = async (localFilePath) => {
-    try {
-        if (!localFilePath) return null
-        //upload the file on cloudinary
-        const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "auto"
-        })
-        // file has been uploaded successfull
-        //console.log("file is uploaded on cloudinary ", response.url);
-        fs.unlinkSync(localFilePath)
-        return {
-          url: response.secure_url,
-          publicId: response.public_id
-        };
+export const uploadOnCloudinary = async (localFilePath) => {
+  try {
+    if (!localFilePath) return null;
 
-    } catch (error) {
-        fs.unlinkSync(localFilePath) // remove the locally saved temporary file as the upload operation got failed
-        return null;
-    }
-}
+    const response = await cloudinary.uploader.upload(localFilePath, {
+      resource_type: "auto"
+    });
 
-const deleteOnCloudinary = async (publicId) => {
+    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
+
+    return {
+      url: response.secure_url,
+      publicId: response.public_id
+    };
+  } catch (error) {
+    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
+    console.error("Cloudinary upload error:", error);
+    return null;
+  }
+};
+
+export const deleteOnCloudinary = async (publicId) => {
   try {
     if (!publicId) return null;
 
     const response = await cloudinary.uploader.destroy(publicId, {
-      resource_type: "image",
+      resource_type: "auto"
     });
 
     return response;
@@ -43,8 +42,3 @@ const deleteOnCloudinary = async (publicId) => {
     return null;
   }
 };
-
-
-
-
-export {uploadOnCloudinary, deleteOnCloudinary}
