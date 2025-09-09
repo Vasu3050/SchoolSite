@@ -3,6 +3,7 @@ import { ApiResponse } from "../Utils/ApiResponse.js";
 import { ApiError } from "../Utils/ApiError.js";
 import { User } from "../Models/user.models.js";
 import { Student } from "../Models/students.model.js";
+import jwt from 'jsonwebtoken'
 
 //options for the cookies 
 const options = {

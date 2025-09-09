@@ -24,6 +24,6 @@ router.route("/reset-password").patch(verifyJWT, resetPassword);
 router.route("/update-user").patch(verifyJWT, updateUser);
 router.route("/pending").get(verifyJWT, getPending);
 router.route("/approve/:id").patch(verifyJWT, approveUser);
-router.route("/refresh-token").get(refreshAccessToken);
+router.route("/refresh-token").patch(refreshAccessToken);
 
 export default router;
