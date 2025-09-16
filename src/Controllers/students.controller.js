@@ -4,56 +4,41 @@ import { ApiError } from "../Utils/ApiError.js";
 import { Student } from "../Models/students.model.js";
 
 //add Students by Admin
-const addStudent = asyncHandler(async (req, res) => {
-  const userRoles = req.user?.roles;
+const addStudent = async (req, res, next) => {
+  try {
+    const { name, dob, grade, division, parent } = req.body;
 
-  if (!userRoles) {
-    throw new ApiError(401, "Unauthorized: User roles not found.");
-  }
+    // find last student whose sid matches pattern, ignoring case
+    const lastStudent = await Student.findOne({ sid: /^sid\d+$/i })
+      .sort({ sid: -1 })
+      .select("sid");
 
-  if (!userRoles.includes("admin")) {
-    throw new ApiError(403, "Only admin can add students.");
-  }
-
-  const { name, dob, grade, division } = req.body;
-
-  if (!name || !dob || !grade || !division) {
-    throw new ApiError(400, "Please provide all required fields.");
-  }
-
-  const lastStudent = await Student.findOne()
-    .sort({ sid: -1 }) // Sort by sid in descending order to get the largest
-    .select("sid");
-
-  let sidNumber = 1; // Default to 1 if no students exist
-  if (lastStudent && lastStudent.sid) {
-    const match = lastStudent.sid.match(/^SID(\d+)$/); // Extract number from SIDXX format
-    if (match) {
-      sidNumber = parseInt(match[1], 10) + 1; // Increment the largest number
+    let sidNumber = 1;
+    if (lastStudent?.sid) {
+      const match = lastStudent.sid.match(/^sid(\d+)$/i); // ignore case
+      if (match) sidNumber = parseInt(match[1], 10) + 1;
     }
+
+    // always generate lowercase sid to match model
+    const formattedSid = `sid${sidNumber.toString().padStart(2, "0")}`;
+
+    const student = await Student.create({
+      name,
+      dob,
+      grade,
+      division,
+      parent,
+      sid: formattedSid,
+    });
+
+    res.status(201).json({
+      success: true,
+      student,
+    });
+  } catch (err) {
+    next(err instanceof ApiError ? err : new ApiError(500, err.message));
   }
-
-  const formattedSid = `SID${sidNumber.toString().padStart(2, "0")}`; // Format with at least 2 digits
-
-  const student = await Student.create({
-    name,
-    sid: formattedSid,
-    dob,
-    grade,
-    division,
-  });
-
-  if (!student) {
-    throw new ApiError(
-      500,
-      "Failed to create student, please try again later."
-    );
-  }
-
-  return res
-    .status(201)
-    .json(new ApiResponse(201, { student }, "Student added successfully"));
-}); // tested Ok
+};
 
 //update Student details with role-based permissions
 const updateStudent = asyncHandler(async (req, res) => {
@@ -201,41 +186,78 @@ const getStudent = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { student }, "Student fetched successfully"));
 }); // tested Ok
 
+// const getStudents = asyncHandler(async (req, res) => {
+//   const { page = 1, limit = 10, name, grade, sort = "asc" } = req.query;
+//   const { role } = req.body;
+
+//   if (!role || role === "parent") {
+//     throw new ApiError(401, "Invalid role provided");
+//   }
+
+//   const { _id, roles } = req.user;
+
+//   if (!roles.includes(role)) {
+//     throw new ApiError(403, "unauthorized access");
+//   }
+
+//   if (!_id) {
+//     throw new ApiError(403, "unauthorized access");
+//   }
+
+//   // build search filter
+//   let filter = {};
+//   if (name) filter.name = { $regex: name, $options: "i" };
+//   if (grade) filter.grade = grade;
+
+//   // pagination options
+//   const options = {
+//     page: parseInt(page, 10),
+//     limit: parseInt(limit, 10),
+//     sort: { sid: sort === "asc" ? 1 : -1 },
+//   };
+
+//   const students = await Student.paginate(filter, options);
+
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, students, "Students fetched successfully"));
+// }); // tested Ok
+
 const getStudents = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 10, name, grade, sort = "asc" } = req.query;
-  const { role } = req.body;
+  const { page = 1, limit = 10, name, grade, division, sid, sort = "asc" } = req.query;
 
-  if (!role || role === "parent") {
-    throw new ApiError(401, "Invalid role provided");
-  }
-
-  const { _id, roles } = req.user;
-
-  if (!roles.includes(role)) {
-    throw new ApiError(403, "unauthorized access");
-  }
-
-  if (!_id) {
-    throw new ApiError(403, "unauthorized access");
-  }
-
-  // build search filter
+  // Build search filter
   let filter = {};
   if (name) filter.name = { $regex: name, $options: "i" };
   if (grade) filter.grade = grade;
+  if (division) filter.division = division;
+  if (sid) filter.sid = { $regex: `^${sid}$`, $options: "i" };
 
-  // pagination options
+  // Pagination options
   const options = {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
     sort: { sid: sort === "asc" ? 1 : -1 },
+    populate: { path: "parent", select: "name email" },
+    lean: { virtuals: true }, // Explicitly include virtuals in lean queries
+    leanWithId: true,
   };
 
-  const students = await Student.paginate(filter, options);
+  const students = await Student.paginate(filter, {
+    ...options,
+    customLabels: {
+      docs: "students",
+      totalDocs: "totalStudents",
+      totalPages: "totalPages",
+      page: "currentPage",
+      nextPage: "nextPage",
+      prevPage: "prevPage",
+    },
+  });
 
   return res
     .status(200)
     .json(new ApiResponse(200, students, "Students fetched successfully"));
-}); // tested Ok
+});
 
 export { addStudent, updateStudent, deleteStudent, getStudent, getStudents };
