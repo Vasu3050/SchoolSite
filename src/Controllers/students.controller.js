@@ -156,7 +156,7 @@ const getStudent = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Unauthorized request");
   }
 
-  const { role } = req.body;
+  const { role } = req.query;  // Changed from req.body to req.query
 
   if (!role) {
     throw new ApiError(400, "Role is required");
@@ -181,47 +181,15 @@ const getStudent = asyncHandler(async (req, res) => {
     }
   }
 
+  // Add dummy parent data if none exists (temporary until API is ready)
+  if (!student.parent || student.parent.length === 0) {
+    student.parent = [{ name: "John Doe", email: "john.doe@example.com" }];
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, { student }, "Student fetched successfully"));
-}); // tested Ok
-
-// const getStudents = asyncHandler(async (req, res) => {
-//   const { page = 1, limit = 10, name, grade, sort = "asc" } = req.query;
-//   const { role } = req.body;
-
-//   if (!role || role === "parent") {
-//     throw new ApiError(401, "Invalid role provided");
-//   }
-
-//   const { _id, roles } = req.user;
-
-//   if (!roles.includes(role)) {
-//     throw new ApiError(403, "unauthorized access");
-//   }
-
-//   if (!_id) {
-//     throw new ApiError(403, "unauthorized access");
-//   }
-
-//   // build search filter
-//   let filter = {};
-//   if (name) filter.name = { $regex: name, $options: "i" };
-//   if (grade) filter.grade = grade;
-
-//   // pagination options
-//   const options = {
-//     page: parseInt(page, 10),
-//     limit: parseInt(limit, 10),
-//     sort: { sid: sort === "asc" ? 1 : -1 },
-//   };
-
-//   const students = await Student.paginate(filter, options);
-
-//   return res
-//     .status(200)
-//     .json(new ApiResponse(200, students, "Students fetched successfully"));
-// }); // tested Ok
+});
 
 const getStudents = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, name, grade, division, sid, sort = "asc" } = req.query;

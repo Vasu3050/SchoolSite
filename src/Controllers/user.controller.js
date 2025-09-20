@@ -558,6 +558,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 }); // tested Ok
 
+const getUserDetails = asyncHandler(async (req, res) => {
+  
+}); // to be implemented
+
 export { 
   adminRegister,
   userRegister,
@@ -567,5 +571,6 @@ export {
   updateUser,
   getPending,
   approveUser,
-  refreshAccessToken,  
+  refreshAccessToken,
+  // getUserDetails,  
 };
