@@ -11,6 +11,13 @@ import {
   approveUser,
   refreshAccessToken,
   // getUserDetails,
+  getUserDetails,
+  updateUserDetails,
+  deleteUserById,
+  getUsersByRole,
+  approveMultipleUsers,
+  rejectMultipleUsers,
+  deleteMultipleUsers,  
 } from "../Controllers/user.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 
@@ -28,6 +35,15 @@ router.route("/approve/:id").patch(verifyJWT, approveUser);
 router.route("/refresh-token").patch(refreshAccessToken);
 //get user details
 // router.route("/me").get(verifyJWT, getUserDetails);
+
+router.route("/get-user/:id").get(verifyJWT, getUserDetails);
+router.route("/update-user/:id").patch(verifyJWT, updateUserDetails);
+router.route("/delete-user/:id").delete(verifyJWT, deleteUserById);
+router.route("/get-users-by-role").get(verifyJWT, getUsersByRole);
+router.route("/approve-multiple").patch(verifyJWT, approveMultipleUsers);
+router.route("/reject-multiple").patch(verifyJWT, rejectMultipleUsers);
+router.route("/delete-multiple").delete(verifyJWT, deleteMultipleUsers);
+
 router.route("/get-pending-count").post(verifyJWT, getPending);
 
 export default router;

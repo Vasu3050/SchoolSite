@@ -209,7 +209,7 @@ const userRegister = asyncHandler(async (req, res) => {
       phone,
       roles: [role], // Convert single role to array for the model
       // FIXED: Set status to active for now (remove pending restriction)
-      status: "active",
+      status: "pending",
     });
 
     if (!user) {
@@ -567,11 +567,350 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 }); // tested Ok
 
-const getUserDetails = asyncHandler(async (req, res) => {
+// const getUserDetails = asyncHandler(async (req, res) => {
   
-}); // to be implemented
+// }); // to be implemented
+
+// Get user details by ID
+const getUserDetails = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can access user details.");
+  }
+
+  const userId = req.params.id;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required.");
+  }
+
+  const user = await User.findById(userId).select(
+    "-password -refreshToken -__v"
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  // If user is a parent, also fetch their children
+  let children = [];
+  if (user.roles.includes("parent")) {
+    children = await Student.find({ parent: user._id }).select(
+      "name sid grade division dob"
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user, children },
+        "User details fetched successfully."
+      )
+    );
+}); // tested Ok
+
+// Update user details by ID
+const updateUserDetails = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can update user details.");
+  }
+
+  const userId = req.params.id;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required for update.");
+  }
+
+  const { name, email, phone } = req.body;
+
+  if (!name && !email && !phone) {
+    throw new ApiError(400, "At least one field is required to update.");
+  }
+
+  const updateData = {};
+  if (name) updateData.name = name;
+  if (email) updateData.email = email;
+  if (phone) updateData.phone = phone;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    updateData,
+    { new: true, runValidators: true }
+  ).select("-password -refreshToken -__v");
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User not found with the provided ID.");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { user: updatedUser },
+        "User details updated successfully"
+      )
+    );
+}); // tested Ok
+
+// Delete user by ID
+const deleteUserById = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can delete users.");
+  }
+
+  const userId = req.params.id;
+
+  if (!userId) {
+    throw new ApiError(400, "User ID is required for deletion.");
+  }
+
+  const deletedUser = await User.findByIdAndDelete(userId);
+
+  if (!deletedUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  // If user was a parent, remove them from students' parent array
+  if (deletedUser.roles.includes("parent")) {
+    await Student.updateMany(
+      { parent: deletedUser._id },
+      { $pull: { parent: deletedUser._id } }
+    );
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, {}, "User deleted successfully from the database")
+    );
+}); // tested OK
+
+// Get users by role with filters and pagination
+const getUsersByRole = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can access users by role.");
+  }
+
+  const { 
+    role, 
+    page = 1, 
+    limit = 10, 
+    name, 
+    email, 
+    status,
+    sort = "asc" 
+  } = req.query;
+
+  if (!role || !["teacher", "parent"].includes(role)) {
+    throw new ApiError(400, "Valid role (teacher/parent) is required.");
+  }
+
+  // Build search filter
+  let filter = { roles: role };
+  if (name) filter.name = { $regex: name, $options: "i" };
+  if (email) filter.email = { $regex: email, $options: "i" };
+  if (status) filter.status = status;
+
+  // Pagination options
+  const options = {
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
+    sort: { name: sort === "asc" ? 1 : -1 },
+    select: "-password -refreshToken -__v",
+    lean: true,
+  };
+
+  const users = await User.paginate(filter, {
+    ...options,
+    customLabels: {
+      docs: "users",
+      totalDocs: "totalUsers",
+      totalPages: "totalPages",
+      page: "currentPage",
+      nextPage: "nextPage",
+      prevPage: "prevPage",
+    },
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, users, "Users fetched successfully"));
+}); // tested Ok
+
+// Approve multiple users
+const approveMultipleUsers = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  const { role, userIds } = req.body;
+
+  if (!role || role !== "admin") {
+    throw new ApiError(401, "Invalid role provided");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, "User IDs array is required.");
+  }
+
+  const result = await User.updateMany(
+    { _id: { $in: userIds } },
+    { status: "active" }
+  );
+
+  if (result.matchedCount === 0) {
+    throw new ApiError(404, "No users found with the provided IDs.");
+  }
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { approvedCount: result.modifiedCount },
+        `${result.modifiedCount} user(s) approved successfully`
+      )
+    );
+}); // tested Ok
+
+// Reject multiple users (delete them)
+const rejectMultipleUsers = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  const { role, userIds } = req.body;
+
+  if (!role || role !== "admin") {
+    throw new ApiError(401, "Invalid role provided");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Unauthorized access");
+  }
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, "User IDs array is required.");
+  }
+
+  // Find users before deletion to handle cleanup
+  const usersToDelete = await User.find({ _id: { $in: userIds } });
+
+  // Remove parent references from students
+  const parentIds = usersToDelete
+    .filter(user => user.roles.includes("parent"))
+    .map(user => user._id);
+
+  if (parentIds.length > 0) {
+    await Student.updateMany(
+      { parent: { $in: parentIds } },
+      { $pullAll: { parent: parentIds } }
+    );
+  }
+
+  // Delete users
+  const result = await User.deleteMany({ _id: { $in: userIds } });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { rejectedCount: result.deletedCount },
+        `${result.deletedCount} user(s) rejected successfully`
+      )
+    );
+}); // tested Ok
+
+// Delete multiple users
+const deleteMultipleUsers = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can delete users.");
+  }
+
+  const { userIds } = req.body;
+
+  if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+    throw new ApiError(400, "User IDs array is required.");
+  }
+
+  // Find users before deletion to handle cleanup
+  const usersToDelete = await User.find({ _id: { $in: userIds } });
+
+  // Remove parent references from students
+  const parentIds = usersToDelete
+    .filter(user => user.roles.includes("parent"))
+    .map(user => user._id);
+
+  if (parentIds.length > 0) {
+    await Student.updateMany(
+      { parent: { $in: parentIds } },
+      { $pullAll: { parent: parentIds } }
+    );
+  }
+
+  // Delete users
+  const result = await User.deleteMany({ _id: { $in: userIds } });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        { deletedCount: result.deletedCount },
+        `${result.deletedCount} user(s) deleted successfully`
+      )
+    );
+}); // tested Ok
 
 export { 
+  getUserDetails,
+  updateUserDetails,
+  deleteUserById,
+  getUsersByRole,
+  approveMultipleUsers,
+  rejectMultipleUsers,
+  deleteMultipleUsers,  
   adminRegister,
   userRegister,
   userLogin,
