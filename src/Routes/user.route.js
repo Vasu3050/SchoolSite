@@ -10,6 +10,7 @@ import {
   getPending,
   approveUser,
   refreshAccessToken,
+  // getUserDetails,
 } from "../Controllers/user.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 
@@ -22,8 +23,11 @@ router.route("/login").patch(userLogin);
 router.route("/logout").patch(verifyJWT, userLogout);
 router.route("/reset-password").patch(verifyJWT, resetPassword);
 router.route("/update-user").patch(verifyJWT, updateUser);
-router.route("/pending").get(verifyJWT, getPending);
+router.route("/pending").post(verifyJWT, getPending);
 router.route("/approve/:id").patch(verifyJWT, approveUser);
 router.route("/refresh-token").patch(refreshAccessToken);
+//get user details
+// router.route("/me").get(verifyJWT, getUserDetails);
+router.route("/get-pending-count").post(verifyJWT, getPending);
 
 export default router;

@@ -9,13 +9,19 @@ const photoGallerySchema = new mongoose.Schema(
         },
 
         Url: {
-            type: String, // cloudinary URL 
+            type: String,
             required: true,
         },
 
         publicId : {
-            type: String, // cloudinary URL 
+            type: String,
             required: true,
+        },
+
+        mediaType: {
+            type: String,
+            enum: ['photo', 'video'],
+            default: 'photo'
         },
 
         postedBy: {

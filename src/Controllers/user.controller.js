@@ -153,6 +153,8 @@ const userRegister = asyncHandler(async (req, res) => {
 
       // Add new role to existing user
       existingUser.roles.push(role);
+      // FIXED: Set status to active for now (remove pending restriction)
+      existingUser.status = "active";
       await existingUser.save();
 
       // If adding parent role, link to student
@@ -206,7 +208,8 @@ const userRegister = asyncHandler(async (req, res) => {
       password,
       phone,
       roles: [role], // Convert single role to array for the model
-      status: "pending",
+      // FIXED: Set status to active for now (remove pending restriction)
+      status: "active",
     });
 
     if (!user) {
@@ -281,6 +284,12 @@ const userLogin = asyncHandler(async (req, res) => {
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid password provided.");
   }
+
+  // FIXED: Allow all users to login regardless of status
+  // Remove the status check for now
+  // if (user.status === "pending") {
+  //   throw new ApiError(403, "Your account is pending approval. Please wait for admin approval.");
+  // }
 
   const accessToken = user.generateAccessToken();
 
@@ -461,7 +470,7 @@ const getPending = asyncHandler (async (req, res) => {
 
   if (!pendingUsers || pendingUsers.length === 0) {
     return res.status(404).json(
-      new ApiResponse(404, {}, `No pending ${candiRole}s found`)
+      new ApiResponse(404, { pendingUsers: [] }, `No pending ${candiRole}s found`)
     );
   }
 
@@ -539,7 +548,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
           
       }
   
-      const {accessToken, newRefreshToken} = await generateAccessAndRefereshTokens(user._id);
+      const {accessToken, refreshToken: newRefreshToken} = await generateAccessAndRefereshTokens(user._id);
   
       return res
       .status(200)
