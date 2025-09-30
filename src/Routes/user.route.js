@@ -1,16 +1,6 @@
 import { Router } from "express";
 //admin controllers import
 import {
-  adminRegister,
-  userRegister,
-  userLogin,
-  userLogout,
-  resetPassword,
-  updateUser,
-  getPending,
-  approveUser,
-  refreshAccessToken,
-  // getUserDetails,
   getUserDetails,
   updateUserDetails,
   deleteUserById,
@@ -18,6 +8,15 @@ import {
   approveMultipleUsers,
   rejectMultipleUsers,
   deleteMultipleUsers,  
+  adminRegister,
+  userRegister,
+  userLogin,
+  userLogout,
+  resetPassword,  
+  updateUser,
+  getPending,
+  approveUser,
+  refreshAccessToken,  
 } from "../Controllers/user.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 

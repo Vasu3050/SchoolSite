@@ -567,9 +567,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 }); // tested Ok
 
-// const getUserDetails = asyncHandler(async (req, res) => {
-  
-// }); // to be implemented
+
 
 // Get user details by ID
 const getUserDetails = asyncHandler(async (req, res) => {
@@ -919,6 +917,5 @@ export {
   updateUser,
   getPending,
   approveUser,
-  refreshAccessToken,
-  // getUserDetails,  
+  refreshAccessToken,  
 };
