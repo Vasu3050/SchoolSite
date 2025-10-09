@@ -17,6 +17,7 @@ import {
   getPending,
   approveUser,
   refreshAccessToken,  
+  children,
 } from "../Controllers/user.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 
@@ -44,5 +45,7 @@ router.route("/reject-multiple").patch(verifyJWT, rejectMultipleUsers);
 router.route("/delete-multiple").delete(verifyJWT, deleteMultipleUsers);
 
 router.route("/get-pending-count").post(verifyJWT, getPending);
+router.route("/children/:id").get(verifyJWT, children);
+
 
 export default router;

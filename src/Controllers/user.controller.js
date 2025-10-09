@@ -901,6 +901,49 @@ const deleteMultipleUsers = asyncHandler(async (req, res) => {
     );
 }); // tested Ok
 
+const children = asyncHandler(async (req, res) => {
+  const { _id, roles } = req.user;
+
+  if (!_id || !roles) {
+    throw new ApiError(400, "Unauthorized Access.");
+  }
+
+  if (!roles.includes("admin")) {
+    throw new ApiError(403, "Only admin can access parent and children details.");
+  }
+
+  const parentId = req.params.id;
+
+  if (!parentId) {
+    throw new ApiError(400, "Parent ID is required.");
+  }
+
+  // Fetch parent details
+  const parentDetails = await User.findById(parentId)
+    .select("-password -refreshToken -__v -createdAt -updatedAt");
+
+  if (!parentDetails) {
+    throw new ApiError(404, "Parent not found with the provided ID.");
+  }
+
+  if (!parentDetails.roles.includes("parent")) {
+    throw new ApiError(400, "Provided user is not a parent.");
+  }
+
+  // Fetch children of the parent
+  const children = await Student.find({ parent: parentId })
+    .select("name sid grade division dob");
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      { parent: parentDetails, children },
+      "Parent details and their children fetched successfully."
+    )
+  );
+});
+
+
 export { 
   getUserDetails,
   updateUserDetails,
@@ -918,4 +961,5 @@ export {
   getPending,
   approveUser,
   refreshAccessToken,  
+  children
 };

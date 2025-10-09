@@ -12,11 +12,9 @@ const getChildren = asyncHandler(async (req, res) => {
       throw new ApiError(401, "Invalid role provided");
     }
   
-    const { _id, roles } = req.user; 
+    const { _id, } = req.user; 
   
-    if (!roles.includes("parent")) {
-      throw new ApiError(403, "unauthorized access");
-    }
+    
   
     if (!_id) {
       throw new ApiError(403, "unauthorized access");
