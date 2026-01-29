@@ -18,6 +18,7 @@ import {
   approveUser,
   refreshAccessToken,  
   children,
+  getAllTeachers,
 } from "../Controllers/user.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 
@@ -47,6 +48,10 @@ router.route("/delete-multiple").delete(verifyJWT, deleteMultipleUsers);
 
 router.route("/get-pending-count").post(verifyJWT, getPending);
 router.route("/children/:id").get(verifyJWT, children);
+
+
+router.get("/teachers", verifyJWT, getAllTeachers);
+
 
 
 export default router;

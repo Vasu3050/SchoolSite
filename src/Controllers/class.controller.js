@@ -1,148 +1,158 @@
 import mongoose from "mongoose";
-import Class from "../Models/academicClass.model.js";
+import AcademicClass from "../Models/academicClass.model.js";
+import { ApiError } from "../Utils/ApiError.js";
+import { ApiResponse } from "../Utils/ApiResponse.js";
+import { asyncHandler } from "../Utils/asyncHandler.js";
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-// CREATE CLASS (admin only)
-export const createClass = async (req, res) => {
-  try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+// ===== CREATE CLASS (ADMIN) =====
+export const createClass = asyncHandler(async (req, res) => {
+  const user = req.user;
 
-    const { name, section, academicYear } = req.body;
-
-    if (!name || !section) {
-      return res.status(400).json({ message: "Missing fields" });
-    }
-
-    const exists = await Class.findOne({ name, section });
-    if (exists) {
-      return res.status(409).json({ message: "Class already exists" });
-    }
-
-    const newClass = await Class.create({
-      name,
-      section,
-      academicYear,
-    });
-
-    res.status(201).json(newClass);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+  if (!user || !user.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
   }
-};
 
-// GET ALL CLASSES (admin only)
-export const getAllClasses = async (req, res) => {
-  try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+  const {
+    grade,
+    section,
+    academicYear,
+    classTeachers,
+    subjectTeachers = [],
+  } = req.body;
 
-    const classes = await Class.find();
-    res.json(classes);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  if (!grade || !section || !academicYear) {
+    throw new ApiError(400, "Grade, section and academic year are required");
   }
-};
 
-// GET SINGLE CLASS (read-only for all roles)
-export const getClassById = async (req, res) => {
-  try {
-    const { classId } = req.params;
-
-    if (!isValidId(classId)) {
-      return res.status(400).json({ message: "Invalid class id" });
-    }
-
-    const cls = await Class.findById(classId);
-    if (!cls) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    res.json(cls);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  if (!Array.isArray(classTeachers) || classTeachers.length === 0) {
+    throw new ApiError(400, "At least one class teacher is required");
   }
-};
 
-// ASSIGN CLASS TEACHERS (admin only)
-export const assignClassTeachers = async (req, res) => {
-  try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const { classId } = req.params;
-    const { teachers } = req.body;
-
-    if (!isValidId(classId)) {
-      return res.status(400).json({ message: "Invalid class id" });
-    }
-
-    const cls = await Class.findByIdAndUpdate(
-      classId,
-      { classTeachers: teachers },
-      { new: true }
-    );
-
-    if (!cls) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    res.json(cls);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+  const exists = await AcademicClass.findOne({ grade, section, academicYear });
+  if (exists) {
+    throw new ApiError(409, "Class already exists");
   }
-};
 
-// ASSIGN SUBJECT TEACHERS (admin only)
-export const assignSubjectTeachers = async (req, res) => {
-  try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+  const newClass = await AcademicClass.create({
+    grade,
+    section,
+    academicYear,
+    classTeachers,
+    subjectTeachers,
+    createdBy: user._id, // 🔥 REQUIRED BY MODEL
+  });
 
-    const { classId } = req.params;
-    const { subjects } = req.body;
+  res.status(201).json(
+    new ApiResponse(201, newClass, "Class created successfully")
+  );
+});
 
-    if (!isValidId(classId)) {
-      return res.status(400).json({ message: "Invalid class id" });
-    }
-
-    const cls = await Class.findByIdAndUpdate(
-      classId,
-      { subjectTeachers: subjects },
-      { new: true }
-    );
-
-    if (!cls) {
-      return res.status(404).json({ message: "Class not found" });
-    }
-
-    res.json(cls);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+// ===== GET ALL CLASSES (ADMIN) =====
+export const getAllClasses = asyncHandler(async (req, res) => {
+  if (!req.user?.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
   }
-};
 
-// GET TEACHER CLASSES
-export const getMyClasses = async (req, res) => {
-  try {
-    if (req.user.role !== "teacher") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+  const classes = await AcademicClass.find()
+    .populate("classTeachers", "name email")
+    .populate("subjectTeachers.teacher", "name email")
+    .sort({ createdAt: -1 });
 
-    const classes = await Class.find({
-      $or: [
-        { classTeachers: req.user._id },
-        { "subjectTeachers.teacher": req.user._id },
-      ],
-    });
+  res.status(200).json(
+    new ApiResponse(200, classes, "Classes fetched successfully")
+  );
+});
 
-    res.json(classes);
-  } catch {
-    res.status(500).json({ message: "Server error" });
+// ===== GET CLASS BY ID =====
+export const getClassById = asyncHandler(async (req, res) => {
+  const { classId } = req.params;
+
+  if (!isValidId(classId)) {
+    throw new ApiError(400, "Invalid class ID");
   }
-};
+
+  const cls = await AcademicClass.findById(classId)
+    .populate("classTeachers", "name email")
+    .populate("subjectTeachers.teacher", "name email");
+
+  if (!cls) {
+    throw new ApiError(404, "Class not found");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, cls, "Class fetched successfully")
+  );
+});
+
+// ===== UPDATE CLASS (ADMIN) =====
+export const updateClass = asyncHandler(async (req, res) => {
+  if (!req.user?.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
+  }
+
+  const { classId } = req.params;
+  const updates = req.body;
+
+  if (!isValidId(classId)) {
+    throw new ApiError(400, "Invalid class ID");
+  }
+
+  const updatedClass = await AcademicClass.findByIdAndUpdate(
+    classId,
+    updates,
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedClass) {
+    throw new ApiError(404, "Class not found");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, updatedClass, "Class updated successfully")
+  );
+});
+
+// ===== TOGGLE ACTIVE / ARCHIVED =====
+export const toggleClassStatus = asyncHandler(async (req, res) => {
+  if (!req.user?.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
+  }
+
+  const { classId } = req.params;
+
+  const cls = await AcademicClass.findById(classId);
+  if (!cls) {
+    throw new ApiError(404, "Class not found");
+  }
+
+  cls.status = cls.status === "active" ? "archived" : "active";
+  await cls.save();
+
+  res.status(200).json(
+    new ApiResponse(200, cls, `Class ${cls.status}`)
+  );
+});
+
+// ===== DELETE CLASS (ADMIN) =====
+export const deleteClass = asyncHandler(async (req, res) => {
+  if (!req.user?.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
+  }
+
+  const { classId } = req.params;
+
+  if (!isValidId(classId)) {
+    throw new ApiError(400, "Invalid class ID");
+  }
+
+  const deleted = await AcademicClass.findByIdAndDelete(classId);
+  if (!deleted) {
+    throw new ApiError(404, "Class not found");
+  }
+
+  res.status(200).json(
+    new ApiResponse(200, {}, "Class deleted successfully")
+  );
+});

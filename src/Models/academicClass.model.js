@@ -1,10 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 
-/**
- * Subject → Teacher mapping
- * One subject = one teacher per class
- * Same teacher can appear multiple times for different subjects
- */
+/* Subject → Teacher (one teacher per subject per class) */
 const subjectTeacherSchema = new Schema(
   {
     subject: {
@@ -25,44 +21,56 @@ const academicClassSchema = new Schema(
   {
     // ===== CLASS IDENTITY =====
     grade: {
-      type: String, // "7"
+      type: String,
       required: true,
       trim: true,
     },
 
     section: {
-      type: String, // "A"
+      type: String,
       required: true,
       uppercase: true,
       trim: true,
     },
 
     academicYear: {
-      type: String, // "2025-2026"
+      type: String,
       required: true,
       match: /^\d{4}-\d{4}$/,
     },
 
     classCode: {
-      type: String, // "7A-2025-2026"
+      type: String,
       unique: true,
       index: true,
     },
 
     // ===== TEACHERS =====
-    // Minimum 1 class teacher, can be more
-    classTeachers: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+    classTeachers: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      validate: {
+        validator: (v) => Array.isArray(v) && v.length > 0,
+        message: "At least one class teacher is required",
       },
-    ],
+    },
 
-    // Subject-wise teachers
-    subjectTeachers: [subjectTeacherSchema],
+    subjectTeachers: {
+      type: [subjectTeacherSchema],
+      validate: {
+        validator: function (arr) {
+          const subjects = arr.map((s) => s.subject.toLowerCase());
+          return subjects.length === new Set(subjects).size;
+        },
+        message: "Duplicate subjects are not allowed in a class",
+      },
+    },
 
-    // ===== STUDENTS (FUTURE USE) =====
+    // ===== STUDENTS (FUTURE) =====
     students: [
       {
         type: Schema.Types.ObjectId,
@@ -70,7 +78,7 @@ const academicClassSchema = new Schema(
       },
     ],
 
-    // ===== LIFECYCLE =====
+    // ===== STATUS =====
     status: {
       type: String,
       enum: ["active", "archived"],
@@ -79,16 +87,14 @@ const academicClassSchema = new Schema(
 
     createdBy: {
       type: Schema.Types.ObjectId,
-      ref: "User", // admin
+      ref: "User",
       required: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// ===== AUTO-GENERATE CLASS CODE =====
+// ===== AUTO CLASS CODE =====
 academicClassSchema.pre("save", function (next) {
   if (!this.classCode) {
     this.classCode = `${this.grade}${this.section}-${this.academicYear}`;
@@ -96,7 +102,5 @@ academicClassSchema.pre("save", function (next) {
   next();
 });
 
-export const AcademicClass = mongoose.model(
-  "AcademicClass",
-  academicClassSchema
-);
+const AcademicClass = mongoose.model("AcademicClass", academicClassSchema);
+export default AcademicClass;

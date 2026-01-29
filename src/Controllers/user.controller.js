@@ -971,6 +971,21 @@ const children = asyncHandler(async (req, res) => {
   );
 });
 
+// Controllers/user.controller.js
+export const getAllTeachers = asyncHandler(async (req, res) => {
+  if (!req.user?.roles.includes("admin")) {
+    throw new ApiError(403, "Access denied");
+  }
+
+  const teachers = await User.find({ roles: "teacher" })
+    .select("_id name email");
+
+  res.status(200).json(
+    new ApiResponse(200, teachers, "Teachers fetched")
+  );
+});
+
+
 
 export { 
   getUserDetails,
@@ -989,5 +1004,6 @@ export {
   getPending,
   approveUser,
   refreshAccessToken,  
-  children
+  children,
+  
 };
