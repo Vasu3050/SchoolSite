@@ -39,6 +39,7 @@ router.route("/refresh-token").patch(refreshAccessToken);
 router.route("/get-user/:id").get(verifyJWT, getUserDetails);
 router.route("/update-user/:id").patch(verifyJWT, updateUserDetails);
 router.route("/delete-user/:id").delete(verifyJWT, deleteUserById);
+// Should be in src/Routes/user.route.js
 router.route("/get-users-by-role").get(verifyJWT, getUsersByRole);
 router.route("/approve-multiple").patch(verifyJWT, approveMultipleUsers);
 router.route("/reject-multiple").patch(verifyJWT, rejectMultipleUsers);

@@ -332,6 +332,64 @@ const deleteMultiplePhotos = asyncHandler(async (req, res) => {
     }, `${deleteResult.deletedCount} photos deleted successfully.`));
 });
 
+// Get gallery with pagination and filtering for admin/teacher management
+const getGalleryForManagement = asyncHandler(async (req, res) => {
+  checkAuthorization(req.user);
+
+  const { page = 1, limit = 12, type = 'all' } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+
+  // Build filter based on type
+  let filter = {};
+  if (type === 'events') {
+    filter.event = true;
+  } else if (type === 'gallery') {
+    filter.event = false;
+  }
+  // If type is 'all', no filter is applied
+
+  const gallery = await PhotoGallery.find(filter)
+    .populate('postedBy', 'name email')
+    .sort({ createdAt: -1 })
+    .limit(limitNum * 1)
+    .skip((pageNum - 1) * limitNum);
+
+  const total = await PhotoGallery.countDocuments(filter);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {
+      gallery,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(total / limitNum),
+        totalItems: total,
+        hasNext: pageNum < Math.ceil(total / limitNum),
+        hasPrev: pageNum > 1
+      }
+    }, "Gallery fetched successfully for management."));
+});
+
+// Get single photo details
+const getPhotoById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new ApiError(400, "Photo ID is required.");
+  }
+
+  const photo = await PhotoGallery.findById(id).populate('postedBy', 'name email');
+
+  if (!photo) {
+    throw new ApiError(404, "Photo not found.");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, photo, "Photo details fetched successfully."));
+});
+
 export { 
   uploadNew, 
   getGallery, 
@@ -339,4 +397,6 @@ export {
   deletePhotoById, 
   editPhotoById,
   deleteMultiplePhotos,
+  getGalleryForManagement,
+  getPhotoById,
 };

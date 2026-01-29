@@ -703,7 +703,7 @@ const deleteUserById = asyncHandler(async (req, res) => {
     );
 }); // tested OK
 
-// Get users by role with filters and pagination
+// Improved version of getUsersByRole
 const getUsersByRole = asyncHandler(async (req, res) => {
   const { _id, roles } = req.user;
 
@@ -725,6 +725,8 @@ const getUsersByRole = asyncHandler(async (req, res) => {
     sort = "asc" 
   } = req.query;
 
+  console.log("getUsersByRole called with:", { role, page, limit, name, email, status, sort });
+
   if (!role || !["teacher", "parent"].includes(role)) {
     throw new ApiError(400, "Valid role (teacher/parent) is required.");
   }
@@ -735,6 +737,8 @@ const getUsersByRole = asyncHandler(async (req, res) => {
   if (email) filter.email = { $regex: email, $options: "i" };
   if (status) filter.status = status;
 
+  console.log("Filter being used:", filter);
+
   // Pagination options
   const options = {
     page: parseInt(page, 10),
@@ -744,22 +748,47 @@ const getUsersByRole = asyncHandler(async (req, res) => {
     lean: true,
   };
 
-  const users = await User.paginate(filter, {
-    ...options,
-    customLabels: {
-      docs: "users",
-      totalDocs: "totalUsers",
-      totalPages: "totalPages",
-      page: "currentPage",
-      nextPage: "nextPage",
-      prevPage: "prevPage",
-    },
-  });
+  try {
+    const users = await User.paginate(filter, {
+      ...options,
+      customLabels: {
+        docs: "users",
+        totalDocs: "totalUsers",
+        totalPages: "totalPages",
+        page: "currentPage",
+        nextPage: "nextPage",
+        prevPage: "prevPage",
+      },
+    });
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, users, "Users fetched successfully"));
-}); // tested Ok
+    console.log("Paginated users result:", {
+      totalUsers: users.totalUsers,
+      currentPage: users.currentPage,
+      usersCount: users.users?.length
+    });
+
+    // FIXED: Better check for empty results
+    if (!users.users || users.users.length === 0) {
+      return res.status(200).json(
+        new ApiResponse(200, {
+          users: [],
+          totalUsers: 0,
+          totalPages: 0,
+          currentPage: 1,
+          nextPage: null,
+          prevPage: null,
+        }, `No ${role}s found`)
+      );
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, users, "Users fetched successfully"));
+  } catch (error) {
+    console.error("Error in getUsersByRole:", error);
+    throw new ApiError(500, `Failed to fetch users: ${error.message}`);
+  }
+});
 
 // Approve multiple users
 const approveMultipleUsers = asyncHandler(async (req, res) => {
@@ -920,7 +949,7 @@ const children = asyncHandler(async (req, res) => {
 
   // Fetch parent details
   const parentDetails = await User.findById(parentId)
-    .select("-password -refreshToken -__v -createdAt -updatedAt");
+    .select("-password -refreshToken");
 
   if (!parentDetails) {
     throw new ApiError(404, "Parent not found with the provided ID.");
@@ -931,8 +960,7 @@ const children = asyncHandler(async (req, res) => {
   }
 
   // Fetch children of the parent
-  const children = await Student.find({ parent: parentId })
-    .select("name sid grade division dob");
+  const children = await Student.find({ parent: parentId }).select("");;
 
   return res.status(200).json(
     new ApiResponse(

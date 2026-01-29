@@ -6,6 +6,8 @@ import {
   deletePhotoById,
   editPhotoById,
   deleteMultiplePhotos,
+  getGalleryForManagement,
+  getPhotoById,
 } from "../Controllers/phototGallery.controller.js";
 import { verifyJWT } from "../Middelwares/auth.middelwares.js";
 import { upload } from "../Middelwares/multer.middelware.js";
@@ -47,6 +49,10 @@ router.route("/upload-event").post(
 );
 
 router.route("/").get(getGallery);
+
+// Management routes (require authentication)
+router.route("/manage").get(verifyJWT, getGalleryForManagement);
+router.route("/:id").get(getPhotoById);
 
 router.route("/delete/:id").delete(verifyJWT,deletePhotoById);
 router.route("/delete").delete(verifyJWT,deleteMultiplePhotos);
