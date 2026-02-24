@@ -72,6 +72,7 @@ export const getAllClasses = asyncHandler(async (req, res) => {
   }
 
   const classes = await AcademicClass.find()
+    .populate("academicYear", "name startDate endDate")
     .populate("classTeachers", "name email")
     .populate("subjectTeachers.teacher", "name email")
     .sort({ createdAt: -1 });
@@ -80,6 +81,8 @@ export const getAllClasses = asyncHandler(async (req, res) => {
     new ApiResponse(200, classes, "Classes fetched successfully")
   );
 });
+
+
 
 // ===== GET MY CLASSES (TEACHER) =====
 export const getMyClasses = asyncHandler(async (req, res) => {
@@ -90,11 +93,13 @@ export const getMyClasses = asyncHandler(async (req, res) => {
 
   // Find classes where teacher is a class teacher or a subject teacher
   const classes = await AcademicClass.find({
+    status: "active",
     $or: [
       { classTeachers: user._id },
       { "subjectTeachers.teacher": user._id },
     ],
   })
+    .populate("academicYear", "name startDate endDate")
     .populate("classTeachers", "name email")
     .populate("subjectTeachers.teacher", "name email")
     .sort({ createdAt: -1 });
@@ -186,8 +191,9 @@ export const getClassById = asyncHandler(async (req, res) => {
   }
 
   const cls = await AcademicClass.findById(classId)
-    .populate("classTeachers", "name email")
-    .populate("subjectTeachers.teacher", "name email");
+  .populate("academicYear", "name startDate endDate")
+  .populate("classTeachers", "name email")
+  .populate("subjectTeachers.teacher", "name email");
 
   if (!cls) {
     throw new ApiError(404, "Class not found");
