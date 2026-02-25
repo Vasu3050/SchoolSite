@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const academicYearSchema = new Schema(
   {
-    name: {                          // e.g. "2025-2026"
+    name: {                          
       type: String,
       required: true,
       unique: true,
@@ -22,14 +22,16 @@ const academicYearSchema = new Schema(
       default: false,
       index: true,
     },
-    metadata: {
-      // optional free-form object for school-level config for this year
-      type: Schema.Types.Mixed,
-      default: {},
-    },
   },
   { timestamps: true }
 );
+
+academicYearSchema.pre("save", async function (next) {
+  if (endDate < startDate) {
+    throw new Error("End date cannot be before start date");
+  }
+  next();
+});
 
 const AcademicYear = mongoose.model("AcademicYear", academicYearSchema);
 export default AcademicYear;
