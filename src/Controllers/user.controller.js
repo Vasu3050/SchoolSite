@@ -285,11 +285,9 @@ const userLogin = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid password provided.");
   }
 
-  // FIXED: Allow all users to login regardless of status
-  // Remove the status check for now
-  // if (user.status === "pending") {
-  //   throw new ApiError(403, "Your account is pending approval. Please wait for admin approval.");
-  // }
+  if (user.status === "pending") {
+    throw new ApiError(403, "Your account is pending approval. Please wait for admin approval.");
+  }
 
   const accessToken = user.generateAccessToken();
 

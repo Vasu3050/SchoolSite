@@ -10,7 +10,6 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
     }
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        console.log("Decoded JWT:", decoded); // For debugging purposes
         req.user = decoded;
         next();
     } catch (error) {

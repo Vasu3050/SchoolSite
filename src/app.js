@@ -26,8 +26,8 @@ import attendanceRoute from "./Routes/Attendance.route.js";
 import dailyDiary from "./Routes/dailyDiary.route.js";
 import photoGallery from "./Routes/photoGallery.route.js";
 import noticeBoard from "./Routes/noticeBoard.route.js";
-import classRoute from "./Routes/class.route.js";
-//route path declarations
+import academicYear from "./Routes/academicYear.route.js";
+
 
 app.use("/api/v1/healthCheck", healthCheck); // All done
 app.use("/api/v1/users", userRoute); // pending
@@ -38,11 +38,7 @@ app.use("/api/v1/attendance", attendanceRoute); // All done
 app.use("/api/v1/diary",dailyDiary);// All done
 app.use("/api/v1/gallery",photoGallery);
 app.use("/api/v1/notice", noticeBoard);
-app.use("/api/v1/class", classRoute);
-
-//notification feature
-//notice Board
-
+app.use("/api/v1/academic-years", academicYear);
 
 export { app };
 
