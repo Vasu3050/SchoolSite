@@ -8,7 +8,11 @@ import {
   deleteAcademicYear
 } from "../Controllers/acamedicYear.controller.js";
 
+import {verifyJWT} from "../Middelwares/auth.middelwares.js";
+
 const router = Router();
+
+router.use(verifyJWT);
 
 // Routes
 router.post("/", createAcademicYear);
